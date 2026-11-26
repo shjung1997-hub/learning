@@ -221,7 +221,7 @@ b{font-weight:700}
 
 /* stamp */
 .stamp{width:150px;height:150px;border-radius:50%;border:4px solid var(--red);box-shadow:inset 0 0 0 5px #fff,inset 0 0 0 7px var(--red);color:var(--red);display:grid;place-items:center;text-align:center;font-family:var(--hand);font-size:40px;line-height:.95;transform:rotate(-12deg);margin:0 auto;animation:stampIn .35s ease-out;opacity:.92}
-.stamp span{width:3.2em}
+.stamp span{display:block;white-space:nowrap}
 .stamp.sm{width:96px;height:96px;font-size:26px;border-width:3px;box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 5px var(--red)}
 @keyframes stampIn{from{transform:rotate(-12deg) scale(1.9);opacity:0}to{transform:rotate(-12deg) scale(1);opacity:.92}}
 
@@ -376,7 +376,7 @@ th{font-weight:700;font-size:14px;color:var(--pencil);border-bottom:1.5px solid 
 .task .note{font-family:var(--hand);font-size:25px;color:var(--red);line-height:1.1;margin-top:2px}
 .task .side{display:flex;align-items:center;gap:12px}
 .task.done{background:#fbfbf7}
-.task .mini-stamp{width:66px;height:66px;font-size:17px}
+.task .mini-stamp{width:66px;height:66px;font-size:17px;white-space:nowrap}
 .task .res{font-size:15px;color:var(--pencil);text-align:right;white-space:nowrap}
 .mini-stamp{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:50%;border:2.5px solid var(--red);box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 3.5px var(--red);color:var(--red);font-family:var(--hand);font-size:19px;line-height:.9;text-align:center;transform:rotate(-12deg)}
 .empty{border:1.5px dashed var(--line);padding:24px;text-align:center;color:var(--pencil);background:var(--sheet)}
@@ -494,6 +494,24 @@ input.in:focus,select.in:focus,textarea.in:focus{outline:3px solid var(--hl)}
   .wrap{max-width:none;padding:0}
   details{display:block} details>*{display:block}
 }
+.rainbox{border-width:2px}
+.raingo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px;padding:14px 16px;background:#fffbe0;border:1.5px dashed var(--ink)}
+.raingo p{font-size:18px}
+.raingo .btn.big{width:auto;min-width:240px}
+table.rank td,table.rank th{font-size:16px}
+table.rank tr.me{background:var(--hl)}
+table.rank b{font-family:var(--display);font-size:20px}
+table.rank small{color:var(--pencil)}
+.first{display:inline-grid;place-items:center;width:44px;height:30px;border:2px solid var(--red);border-radius:50%;color:var(--red);font-family:var(--hand);font-size:22px;transform:rotate(-6deg)}
+.bprog{display:flex;gap:6px;margin-top:10px}
+.bprog span{flex:1;height:10px;background:var(--line)}
+.bprog span.d{background:var(--ink)}
+.bprog span.c{background:var(--hl);outline:1.5px solid var(--ink)}
+.note-done{margin-top:12px;font-family:var(--hand);font-size:26px;color:var(--red)}
+.chain{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600;font-size:15px}
+.chain input{width:18px;height:18px;accent-color:var(--ink)}
+.bsteps{margin:6px 0 0;padding-left:1.3em;font-size:15px}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -532,8 +550,139 @@ const GAMES = {
       ...[2,5,3,4,6,7,8,9].map(a => ['d' + a, `${a}단 문제 풀기`]),
       ['review', '배운 단 복습']
     ]
+  },
+  rain: {
+    title: '구구단 타자 연습', file: 'games/gugu-type.html', timed: true,
+    levels: ['1 느리게', '2 보통', '3 빠르게'],
+    modes: [
+      ...[2,3,4,5,6,7,8,9].map(a => ['gugu-' + a, `${a}단`]),
+      ['gugu-25', '2·5단'], ['gugu-34', '3·4단'], ['gugu-67', '6·7단'], ['gugu-89', '8·9단'], ['gugu-all', '2~9단 섞어서']
+    ]
   }
 };
+
+/* ================= 단원 꾸러미 (차시별 묶음 과제) =================
+   과제 하나에 개념 카드 · 연습 게임 · 문제 풀기를 묶어 한 번에 20~30분 분량이 되게 했어요.
+   원주율은 3.14로 계산해요. 새 단원을 추가할 때는 같은 모양으로 한 덩어리를 더 쓰면 돼요. */
+const QC = (q, choices, answer, explain = '') => ({ type: 'choice', q, choices, answer, explain });
+const QS = (q, answer, explain = '') => ({ type: 'short', q, answer: String(answer), explain });
+const GS = (title, app, mode, level, goal, extra = {}) => ({ type: 'game', title, game: { app, mode, level, goal, ...extra } });
+const QZ = (title, questions) => ({ type: 'quiz', title, questions });
+const BUNDLES = {
+  'm6-5-1': { unit: '5단원 원주와 원의 넓이', no: '5-1', title: '원의 반지름·지름과 원주', min: 25, steps: [
+    GS('개념 카드: 반지름·지름·원주', 'math', 'concept-circle', 1, 0, { from: 0, to: 4 }),
+    GS('반지름 구하기 (목표 50점)', 'math', 'c_radius', 1, 50),
+    QZ('확인 문제 10개', [
+      QC('원의 중심과 원 위의 한 점을 이은 선분을 무엇이라고 할까요?', ['반지름', '지름', '원주'], 0, '원의 중심에서 원 위까지 이은 선분이 반지름이에요.'),
+      QC('원 위의 두 점을 이은 선분 중에서 원의 중심을 지나는 선분은 무엇일까요?', ['반지름', '지름', '원주'], 1, '원의 중심을 지나 원 위의 두 점을 이은 선분이 지름이에요.'),
+      QC('원의 둘레를 무엇이라고 할까요?', ['원주', '지름', '원주율'], 0, '원의 둘레를 원주라고 해요.'),
+      QS('반지름이 6 cm인 원의 지름은 몇 cm일까요?', 12, '지름 = 반지름 × 2 = 6 × 2 = 12'),
+      QS('지름이 18 cm인 원의 반지름은 몇 cm일까요?', 9, '반지름 = 지름 ÷ 2 = 18 ÷ 2 = 9'),
+      QS('반지름이 7 cm인 원의 지름은 몇 cm일까요?', 14, '7 × 2 = 14'),
+      QS('한 변이 10 cm인 정사각형 안에 꼭 맞게 그린 원의 반지름은 몇 cm일까요?', 5, '원의 지름이 정사각형의 한 변과 같아요. 10 ÷ 2 = 5'),
+      QC('원주와 지름 중에서 어느 것이 더 길까요?', ['원주가 더 길어요', '지름이 더 길어요', '길이가 같아요'], 0, '원주는 지름의 3배보다 조금 더 길어요.'),
+      QC('지름이 길어지면 원주는 어떻게 될까요?', ['길어져요', '짧아져요', '그대로예요'], 0, '큰 원일수록 둘레도 길어요.'),
+      QC('원주는 지름의 몇 배쯤일까요?', ['2배보다 짧아요', '3배보다 길고 4배보다 짧아요', '5배보다 길어요'], 1, '원주는 지름의 약 3.14배예요.')
+    ])] },
+  'm6-5-2': { unit: '5단원 원주와 원의 넓이', no: '5-2', title: '원주율 알아보기', min: 25, steps: [
+    GS('개념 카드: 원주율', 'math', 'concept-circle', 1, 0, { from: 4, to: 5 }),
+    GS('공식 만들기 (목표 50점)', 'math', 'c_formula', 1, 50),
+    QZ('확인 문제 10개', [
+      QC('원의 지름에 대한 원주의 비율을 무엇이라고 할까요?', ['원주율', '원주', '비례식'], 0),
+      QC('원주율 = 원주 ÷ (    )', ['지름', '반지름', '원주'], 0, '원주율은 원주를 지름으로 나눈 값이에요.'),
+      QS('원주율을 소수 둘째 자리까지 나타내면 얼마일까요?', 3.14),
+      QC('크기가 다른 두 원의 원주율은 어떨까요?', ['항상 같아요', '큰 원이 더 커요', '작은 원이 더 커요'], 0, '원의 크기와 상관없이 원주율은 같아요.'),
+      QS('원주가 31.4 cm, 지름이 10 cm인 원의 (원주) ÷ (지름)은 얼마일까요?', 3.14, '31.4 ÷ 10 = 3.14'),
+      QS('원주가 62.8 cm, 지름이 20 cm인 원의 (원주) ÷ (지름)은 얼마일까요?', 3.14, '62.8 ÷ 20 = 3.14'),
+      QS('원주가 18.84 cm, 지름이 6 cm인 원의 원주율은 얼마일까요?', 3.14, '18.84 ÷ 6 = 3.14'),
+      QS('원주율 3.1415…를 반올림하여 일의 자리까지 나타내면?', 3),
+      QS('원주율 3.1415…를 반올림하여 소수 첫째 자리까지 나타내면?', 3.1),
+      QC('원주율은 끝없이 이어지는 수예요. 맞으면 O, 틀리면 X', ['O', 'X'], 0, '3.1415926…처럼 끝없이 이어져요.')
+    ])] },
+  'm6-5-3': { unit: '5단원 원주와 원의 넓이', no: '5-3', title: '원주와 지름 구하기', min: 30, steps: [
+    GS('개념 카드: 원주 = 지름 × 원주율', 'math', 'concept-circle', 1, 0, { from: 5, to: 6 }),
+    GS('공식 만들기 2단계 (목표 60점)', 'math', 'c_formula', 2, 60),
+    QZ('확인 문제 12개', [
+      QC('원주 = 지름 × (    )', ['원주율', '반지름', '2'], 0),
+      QS('지름이 5 cm인 원의 원주는 몇 cm일까요?', 15.7, '5 × 3.14 = 15.7'),
+      QS('지름이 8 cm인 원의 원주는 몇 cm일까요?', 25.12, '8 × 3.14 = 25.12'),
+      QS('반지름이 3 cm인 원의 원주는 몇 cm일까요?', 18.84, '지름 6 cm → 6 × 3.14 = 18.84'),
+      QS('반지름이 10 cm인 원의 원주는 몇 cm일까요?', 62.8, '지름 20 cm → 20 × 3.14 = 62.8'),
+      QS('원주가 31.4 cm인 원의 지름은 몇 cm일까요?', 10, '지름 = 원주 ÷ 원주율 = 31.4 ÷ 3.14 = 10'),
+      QS('원주가 43.96 cm인 원의 지름은 몇 cm일까요?', 14, '43.96 ÷ 3.14 = 14'),
+      QS('원주가 37.68 cm인 원의 반지름은 몇 cm일까요?', 6, '지름 = 37.68 ÷ 3.14 = 12, 반지름 = 12 ÷ 2 = 6'),
+      QS('반지름이 4 cm인 바퀴가 한 바퀴 굴러간 거리는 몇 cm일까요?', 25.12, '한 바퀴 거리 = 원주 = 8 × 3.14 = 25.12'),
+      QS('지름이 20 cm인 원과 지름이 10 cm인 원의 원주의 차는 몇 cm일까요?', 31.4, '62.8 - 31.4 = 31.4'),
+      QC('원주가 더 긴 원은 어느 것일까요?', ['지름이 9 cm인 원', '반지름이 5 cm인 원'], 1, '반지름 5 cm인 원의 지름은 10 cm라서 더 길어요.'),
+      QS('지름이 7 cm인 원의 원주는 몇 cm일까요?', 21.98, '7 × 3.14 = 21.98')
+    ])] },
+  'm6-5-4': { unit: '5단원 원주와 원의 넓이', no: '5-4', title: '원의 넓이 어림하고 직사각형으로 바꾸기', min: 30, steps: [
+    GS('개념 카드: 원을 직사각형으로', 'math', 'concept-circle', 1, 0, { from: 6, to: 8 }),
+    GS('직사각형으로 바꿔 넓이 구하기 (목표 50점)', 'math', 'c_rect', 1, 50),
+    QZ('확인 문제 10개', [
+      QC('원을 잘게 잘라 이어 붙이면 어떤 도형에 가까워질까요?', ['직사각형', '삼각형', '오각형'], 0),
+      QC('그 직사각형의 세로는 원의 무엇과 같을까요?', ['반지름', '지름', '원주'], 0),
+      QC('그 직사각형의 가로는 원의 무엇과 같을까요?', ['원주의 1/2', '원주', '지름'], 0, '원주가 위아래로 반씩 나뉘어요.'),
+      QC('원의 넓이 = 반지름 × 반지름 × (    )', ['원주율', '지름', '2'], 0),
+      QS('반지름이 5 cm인 원을 잘라 붙인 직사각형의 가로는 몇 cm일까요?', 15.7, '가로 = 반지름 × 원주율 = 5 × 3.14 = 15.7'),
+      QS('그 직사각형의 세로는 몇 cm일까요?', 5, '세로 = 반지름'),
+      QS('그 직사각형의 넓이는 몇 cm²일까요?', 78.5, '15.7 × 5 = 78.5'),
+      QC('한 변이 10 cm인 정사각형 안에 꼭 맞는 원의 넓이는 정사각형의 넓이와 비교하면?', ['더 작아요', '더 커요', '같아요'], 0, '원이 정사각형 안에 들어가니까 더 작아요.'),
+      QC('반지름이 10 cm인 원의 넓이를 어림하면?', ['200 cm²보다 크고 400 cm²보다 작아요', '100 cm²보다 작아요', '400 cm²보다 커요'], 0, '원 안의 정사각형(200 cm²)보다 크고, 원 밖의 정사각형(400 cm²)보다 작아요.'),
+      QS('반지름이 2 cm인 원의 넓이는 몇 cm²일까요?', 12.56, '2 × 2 × 3.14 = 12.56')
+    ])] },
+  'm6-5-5': { unit: '5단원 원주와 원의 넓이', no: '5-5', title: '원의 넓이 구하기', min: 30, steps: [
+    GS('원의 넓이 구하기 1단계 (목표 50점)', 'math', 'c_area', 1, 50),
+    GS('원의 넓이 구하기 2단계 (목표 50점)', 'math', 'c_area', 2, 50),
+    QZ('확인 문제 12개', [
+      QS('반지름이 3 cm인 원의 넓이는 몇 cm²일까요?', 28.26, '3 × 3 × 3.14 = 28.26'),
+      QS('반지름이 4 cm인 원의 넓이는 몇 cm²일까요?', 50.24, '4 × 4 × 3.14 = 50.24'),
+      QS('반지름이 6 cm인 원의 넓이는 몇 cm²일까요?', 113.04, '6 × 6 × 3.14 = 113.04'),
+      QS('반지름이 10 cm인 원의 넓이는 몇 cm²일까요?', 314, '10 × 10 × 3.14 = 314'),
+      QS('반지름이 7 cm인 원의 넓이는 몇 cm²일까요?', 153.86, '7 × 7 × 3.14 = 153.86'),
+      QS('반지름이 1 cm인 원의 넓이는 몇 cm²일까요?', 3.14),
+      QS('지름이 8 cm인 원의 넓이는 몇 cm²일까요?', 50.24, '반지름 4 cm → 4 × 4 × 3.14 = 50.24'),
+      QS('지름이 14 cm인 원의 넓이는 몇 cm²일까요?', 153.86, '반지름 7 cm → 7 × 7 × 3.14 = 153.86'),
+      QS('지름이 20 cm인 원의 넓이는 몇 cm²일까요?', 314, '반지름 10 cm → 314'),
+      QS('넓이가 78.5 cm²인 원의 반지름은 몇 cm일까요?', 5, '78.5 ÷ 3.14 = 25, 5 × 5 = 25'),
+      QS('넓이가 12.56 cm²인 원의 반지름은 몇 cm일까요?', 2, '12.56 ÷ 3.14 = 4, 2 × 2 = 4'),
+      QS('반지름이 2배가 되면 원의 넓이는 몇 배가 될까요?', 4, '반지름 × 반지름이라서 2 × 2 = 4배')
+    ])] },
+  'm6-5-6': { unit: '5단원 원주와 원의 넓이', no: '5-6', title: '여러 가지 원의 넓이', min: 30, steps: [
+    GS('원의 넓이 구하기 3단계 (목표 50점)', 'math', 'c_area', 3, 50),
+    QZ('도전 문제 10개', [
+      QS('반지름이 10 cm인 반원의 넓이는 몇 cm²일까요?', 157, '원의 넓이 314의 반 → 157'),
+      QS('지름이 12 cm인 반원의 넓이는 몇 cm²일까요?', 56.52, '반지름 6 cm → 6 × 6 × 3.14 = 113.04, 반 → 56.52'),
+      QS('원주가 31.4 cm인 원의 넓이는 몇 cm²일까요?', 78.5, '지름 10 cm, 반지름 5 cm → 5 × 5 × 3.14 = 78.5'),
+      QS('원주가 62.8 cm인 원의 넓이는 몇 cm²일까요?', 314, '지름 20 cm, 반지름 10 cm → 314'),
+      QS('반지름이 4 cm인 원을 똑같이 4조각으로 나눈 한 조각의 넓이는 몇 cm²일까요?', 12.56, '50.24 ÷ 4 = 12.56'),
+      QS('한 변이 10 cm인 정사각형 안에 꼭 맞게 그린 원의 넓이는 몇 cm²일까요?', 78.5, '반지름 5 cm → 78.5'),
+      QS('위 정사각형에서 원을 뺀 나머지 부분의 넓이는 몇 cm²일까요?', 21.5, '100 - 78.5 = 21.5'),
+      QS('반지름이 5 cm인 원과 반지름이 3 cm인 원의 넓이의 차는 몇 cm²일까요?', 50.24, '78.5 - 28.26 = 50.24'),
+      QS('반지름 6 cm인 원 안에서 반지름 3 cm인 원을 뺀 고리 모양의 넓이는 몇 cm²일까요?', 84.78, '113.04 - 28.26 = 84.78'),
+      QS('지름이 30 cm인 피자의 넓이는 몇 cm²일까요?', 706.5, '반지름 15 cm → 15 × 15 × 3.14 = 706.5')
+    ])] },
+  'm6-5-7': { unit: '5단원 원주와 원의 넓이', no: '5-7', title: '단원 마무리', min: 35, steps: [
+    GS('원 종합 연습 (목표 80점)', 'math', 'c_mix', 2, 80),
+    QZ('단원 평가 15문제', [
+      QC('원주율 = 원주 ÷ (    )', ['지름', '반지름', '넓이'], 0),
+      QS('원주율을 소수 둘째 자리까지 나타내면?', 3.14),
+      QS('지름이 7 cm인 원의 원주는 몇 cm일까요?', 21.98, '7 × 3.14 = 21.98'),
+      QS('반지름이 6 cm인 원의 원주는 몇 cm일까요?', 37.68, '12 × 3.14 = 37.68'),
+      QS('원주가 50.24 cm인 원의 지름은 몇 cm일까요?', 16, '50.24 ÷ 3.14 = 16'),
+      QS('반지름이 9 cm인 원의 넓이는 몇 cm²일까요?', 254.34, '9 × 9 × 3.14 = 254.34'),
+      QS('지름이 10 cm인 원의 넓이는 몇 cm²일까요?', 78.5, '반지름 5 cm → 78.5'),
+      QS('원주가 25.12 cm인 원의 넓이는 몇 cm²일까요?', 50.24, '지름 8 cm, 반지름 4 cm → 50.24'),
+      QS('반지름이 8 cm인 반원의 넓이는 몇 cm²일까요?', 100.48, '8 × 8 × 3.14 = 200.96, 반 → 100.48'),
+      QC('원의 넓이 = 반지름 × 반지름 × 원주율. 맞으면 O, 틀리면 X', ['O', 'X'], 0),
+      QC('원주는 반지름의 약 3배예요. 맞으면 O, 틀리면 X', ['O', 'X'], 1, '원주는 지름의 약 3배(3.14배)예요.'),
+      QS('넓이가 28.26 cm²인 원의 반지름은 몇 cm일까요?', 3, '28.26 ÷ 3.14 = 9, 3 × 3 = 9'),
+      QS('반지름이 2 cm인 원과 4 cm인 원의 넓이의 차는 몇 cm²일까요?', 37.68, '50.24 - 12.56 = 37.68'),
+      QS('반지름이 5 cm인 바퀴가 3바퀴 굴러간 거리는 몇 cm일까요?', 94.2, '한 바퀴 31.4 cm × 3 = 94.2'),
+      QS('한 변이 20 cm인 정사각형 안에 꼭 맞게 그린 원의 넓이는 몇 cm²일까요?', 314, '반지름 10 cm → 314')
+    ])] }
+};
+const bundleList = () => Object.entries(BUNDLES).map(([id, b]) => ({ id, ...b }));
 
 /* ================= 도구 ================= */
 const $ = (s, el = document) => el.querySelector(s);
@@ -596,17 +745,21 @@ async function loadStudentData(sid) {
   const [tasks, results, facts] = await Promise.all([DB.get('tasks/' + sid), DB.get('results/' + sid), DB.get('facts/' + sid)]);
   return { tasks: tasks || {}, results: results || {}, facts: facts || {} };
 }
-function modeInfo(app, mode) { const g = GAMES[app]; const m = g && g.modes.find(x => x[0] === mode); return { game: g, label: m ? m[1] : mode, once: !!(m && m[2] === 'once') }; }
+function modeInfo(app, mode) { const g = GAMES[app]; const m = g && g.modes.find(x => x[0] === mode); return { game: g, label: m ? m[1] : mode, once: !!(m && m[2] === 'once'), words: !!(m && m[2] === 'words') }; }
 function taskTitle(t) {
-  if (t.type === 'game') { const mi = modeInfo(t.game.app, t.game.mode); return `${mi.game ? mi.game.title : '게임'} · ${mi.label}`; }
+  if (t.title && t.type === 'game' && t.step) return t.title;
+  if (t.type === 'bundle') { const b = BUNDLES[t.bundle]; return b ? `${b.no} ${b.title}` : '(없는 단원 꾸러미)'; }
+  if (t.type === 'game') { const mi = modeInfo(t.game.app, t.game.mode); if (mi.words && t.game.words) { const ws = t.game.words.split(/\n|,/).map(x => x.split('=')[0].trim()).filter(Boolean); return `${mi.game.title} · ${ws.slice(0, 3).join(', ')}${ws.length > 3 ? ' 외 ' + (ws.length - 3) + '개' : ''}`; } return `${mi.game ? mi.game.title : '게임'} · ${mi.label}`; }
   const s = C.sets[t.setId]; return s ? s.title : '(지워진 문제 세트)';
 }
 function taskDesc(t) {
-  if (t.type === 'game') { const mi = modeInfo(t.game.app, t.game.mode); if (mi.once) return '끝까지 하면 완료'; return `목표 ${t.game.goal}점 · ${mi.game ? mi.game.levels[(t.game.level||1)-1] : ''}`; }
+  if (t.type === 'bundle') { const b = BUNDLES[t.bundle]; return b ? `${b.unit} · ${b.steps.length}단계 · 약 ${b.min}분` : ''; }
+  if (t.type === 'game') { const mi = modeInfo(t.game.app, t.game.mode); if (mi.once) return '끝까지 하면 완료'; if (mi.game && mi.game.timed) return `${t.game.time || 60}초 동안 끝까지 하면 완료 · ${mi.game.levels[(t.game.level||1)-1]}`; return `목표 ${t.game.goal}점 · ${mi.game ? mi.game.levels[(t.game.level||1)-1] : ''}`; }
   const s = C.sets[t.setId]; return s ? `문제 풀기 · ${(s.questions||[]).length}문제${s.subject ? ' · ' + esc(s.subject) : ''}` : '';
 }
 function resultText(t, r) {
   if (!r) return '';
+  if (t.type === 'bundle') { const b = BUNDLES[t.bundle], n = b ? b.steps.length : 0, d = Object.values(r.steps || {}).filter(x => x && x.done).length; return `${Math.min(d, n)} / ${n}단계`; }
   if (t.type === 'quiz') return `${r.score} / ${r.total} 맞힘`;
   const mi = modeInfo(t.game.app, t.game.mode); if (mi.once) return r.done ? '끝까지 했어요' : '하는 중';
   return `최고 ${r.best || 0}점`;
@@ -668,8 +821,8 @@ function pinScreen(sid) {
 /* ================= 학생 화면 ================= */
 async function studentHome(sid, tab = 'today', opt = {}) {
   const s = C.students[sid]; if (!s) return start();
-  const data = await loadStudentData(sid);
-  VIEW = { role: 'student', sid, data, tab };
+  const [data, rank] = await Promise.all([loadStudentData(sid), tab === 'today' ? DB.get('rank') : null]);
+  VIEW = { role: 'student', sid, data, tab, rank: rank || {} };
   const st = streak(data);
   const bar = `<div class="appbar"><p class="who">${esc(s.name)}의 학습장<small>${dateLabel(today())}${st ? ` · ${st}일 연속 공부 중` : ''}</small></p>
     <div class="tabs" role="tablist">${[['today','오늘 과제'],['cal','달력'],['pf','포트폴리오']].map(([k,v]) => `<button type="button" role="tab" class="${tab===k?'on':''}" data-tab="${k}">${v}</button>`).join('')}</div>
@@ -680,7 +833,8 @@ async function studentHome(sid, tab = 'today', opt = {}) {
     const missed = []; for (let i = 1; i <= 14; i++) { const dd = addDays(d, -i); sortTasks(data.tasks[dd]).forEach(t => { const r = (data.results[dd] || {})[t.id]; if (!r || !r.done) missed.push({ date: dd, t }); }); }
     body = `<section class="sheet"><div class="sec-title"><h2>오늘 할 일</h2><p class="small">${dateLabel(d)}</p></div>
       <div class="tasks" style="margin-top:12px">${ts.length ? ts.map((t, i) => taskCard(t, d, data, i+1)).join('') : '<p class="empty">오늘은 과제가 없어요. 달력에서 지난 과제를 다시 해 봐도 좋아요.</p>'}</div></section>
-      ${missed.length ? `<section class="sheet"><div class="sec-title"><h2>아직 못 한 과제</h2><p class="small">지난 2주</p></div><div class="tasks" style="margin-top:12px">${missed.map(m => taskCard(m.t, m.date, data, '', true)).join('')}</div></section>` : ''}`;
+      ${missed.length ? `<section class="sheet"><div class="sec-title"><h2>아직 못 한 과제</h2><p class="small">지난 2주</p></div><div class="tasks" style="margin-top:12px">${missed.map(m => taskCard(m.t, m.date, data, '', true)).join('')}</div></section>` : ''}
+      <section class="sheet rainbox" id="rainbox">${rainBoxHTML(sid)}</section>`;
   }
   if (tab === 'cal') {
     const ym = opt.ym || today().slice(0, 7), sel = opt.sel || today();
@@ -692,7 +846,7 @@ async function studentHome(sid, tab = 'today', opt = {}) {
   setScreen(bar + body, tab === 'pf');
   $$('[data-tab]').forEach(b => b.onclick = () => studentHome(sid, b.dataset.tab));
   $('#out').onclick = () => { ls.set('lp.me', null); start(); };
-  wireTaskButtons();
+  wireTaskButtons(); wireRainBox(sid);
   if (tab === 'cal') wireCal(ym => studentHome(sid, 'cal', { ym, sel: opt.sel }), ds => studentHome(sid, 'cal', { ym: ds.slice(0, 7), sel: ds }));
   if (tab === 'pf') wirePortfolio();
 }
@@ -701,7 +855,7 @@ function taskCard(t, date, data, no, showDate, future) {
   return `<article class="task ${done ? 'done' : ''}"><span class="tn">${no}</span><div><p class="tt">${esc(taskTitle(t))}</p><p class="td">${showDate ? shortDate(date) + ' · ' : ''}${taskDesc(t)}</p>${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}</div>
     <div class="side">${r ? `<span class="res">${resultText(t, r)}</span>` : ''}${done ? '<span class="mini-stamp" aria-label="완료">참<br>잘했어요</span>' : ''}${future ? '<span class="small">그날 할 수 있어요</span>' : `<button class="btn ${done ? 'ghost' : 'blue'}" type="button" data-run="${t.id}" data-date="${date}">${done ? '다시 하기' : r ? '이어 하기' : '시작하기'}</button>`}</div></article>`;
 }
-function wireTaskButtons() { $$('[data-run]').forEach(b => b.onclick = () => { const { sid, data } = VIEW, date = b.dataset.date, t = { id: b.dataset.run, ...data.tasks[date][b.dataset.run] }; if (t.type === 'quiz') playQuiz(sid, date, t); else openGame(sid, date, t); }); }
+function wireTaskButtons() { $$('[data-run]').forEach(b => b.onclick = () => { const { sid, data } = VIEW, date = b.dataset.date, t = { id: b.dataset.run, ...data.tasks[date][b.dataset.run] }; if (t.type === 'quiz') playQuiz(sid, date, t); else if (t.type === 'bundle') bundleScreen(sid, date, t); else openGame(sid, date, t); }); }
 
 /* ================= 달력 ================= */
 function calNav(ym) { const [y, m] = ym.split('-').map(Number); return `<div class="calnav"><button class="btn ghost sm" type="button" data-ym="${ymd(new Date(y, m-2, 1)).slice(0,7)}" aria-label="지난달">‹ 지난달</button><h3>${y}년 ${m}월</h3><button class="btn ghost sm" type="button" data-ym="${ymd(new Date(y, m, 1)).slice(0,7)}" aria-label="다음 달">다음 달 ›</button></div>`; }
@@ -718,8 +872,8 @@ function wireCal(onMonth, onDay) { $$('[data-ym]').forEach(b => b.onclick = () =
 /* ================= 문제 풀기 ================= */
 const normalize = s => String(s ?? '').replace(/\s+/g, '').replace(/[.。]$/, '').toLowerCase();
 function shortOk(input, answer) { const ni = normalize(input); if (!ni) return false; return String(answer).split('|').map(x => x.trim()).filter(Boolean).some(a => { const na = normalize(a); if (ni === na) return true; const x = Number(ni.replace(/,/g, '')), y = Number(na.replace(/,/g, '')); return !isNaN(x) && !isNaN(y) && Math.abs(x - y) < 1e-9; }); }
-async function playQuiz(sid, date, task) {
-  const set = await DB.get('sets/' + task.setId); if (!set || !(set.questions || []).length) { toast('문제 세트를 찾을 수 없어요. 선생님께 말해 주세요.'); return; }
+async function playQuiz(sid, date, task, opt = {}) {
+  const set = opt.set || await DB.get('sets/' + task.setId); if (!set || !(set.questions || []).length) { toast('문제 세트를 찾을 수 없어요. 선생님께 말해 주세요.'); return; }
   const qs = set.questions, S = { i: 0, tries: 0, answers: [], started: Date.now() };
   const render = () => {
     const q = qs[S.i], last = S.i === qs.length - 1;
@@ -730,7 +884,7 @@ async function playQuiz(sid, date, task) {
         : `<div class="row"><input class="ans-in" id="ai" autocomplete="off" aria-label="답 쓰기" placeholder="답을 써요"><button class="btn" type="button" id="chk">채점하기</button></div>`}
       <p class="fb" id="fb" role="status"></p><div id="ex"></div>
       <div class="actions" id="acts"></div></article>`);
-    $('#stop').onclick = () => studentHome(sid);
+    $('#stop').onclick = () => (opt.back || (() => studentHome(sid)))();
     const finish = (ok, given) => {
       S.answers[S.i] = { a: String(given), ok: ok && S.tries === 0, t: S.tries + 1 };
       if (q.explain) $('#ex').innerHTML = `<div class="explain"><b>풀이</b> ${esc(q.explain)}</div>`;
@@ -747,46 +901,101 @@ async function playQuiz(sid, date, task) {
       $('#chk').onclick = go; ai.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } }); ai.addEventListener('input', () => ai.classList.remove('bad')); }
   };
   const endQuiz = async () => {
-    const score = S.answers.filter(a => a.ok).length, prev = await DB.get(`results/${sid}/${date}/${task.id}`);
+    const path = opt.path || `results/${sid}/${date}/${task.id}`, score = S.answers.filter(a => a.ok).length, prev = await DB.get(path);
     const rec = { done: true, score, total: qs.length, at: Date.now(), answers: S.answers, sec: Math.round((Date.now() - S.started) / 1000), tries: ((prev && prev.tries) || 0) + 1 };
     if (prev && prev.comment) rec.comment = prev.comment;
     if (prev && prev.done && prev.score > score) { rec.score = prev.score; rec.answers = prev.answers; rec.best = true; }
-    await DB.set(`results/${sid}/${date}/${task.id}`, rec);
+    await DB.set(path, rec);
+    if (opt.after) return opt.after(rec);
     await stampModal('과제 끝', `${qs.length}문제 중 <b>${score}문제</b>를 처음에 바로 맞혔어요.`, '과제 목록으로');
     studentHome(sid);
   };
   render();
 }
 
+/* ================= 단원 꾸러미 ================= */
+async function bundleScreen(sid, date, task) {
+  const b = BUNDLES[task.bundle]; if (!b) { toast('단원 꾸러미를 찾을 수 없어요.'); return; }
+  const base = `results/${sid}/${date}/${task.id}`, r = (await DB.get(base)) || {}, st = r.steps || {};
+  const doneN = b.steps.filter((_, i) => st[i] && st[i].done).length, back = () => bundleScreen(sid, date, task);
+  if (doneN === b.steps.length && !r.done) { await DB.update(base, { done: true, at: Date.now() }); await stampModal(`${b.no} 꾸러미 끝`, `${esc(b.title)}의 ${b.steps.length}단계를 모두 끝냈어요.`, '확인'); return bundleScreen(sid, date, task); }
+  const nextI = b.steps.findIndex((_, i) => !(st[i] && st[i].done));
+  const stepRes = (s, x) => !x ? '' : s.type === 'quiz' ? `${x.score} / ${x.total} 맞힘` : modeInfo(s.game.app, s.game.mode).once ? (x.done ? '끝까지 했어요' : '하는 중') : `최고 ${x.best || 0}점`;
+  setScreen(`<div class="appbar"><p class="who">${esc(b.no)} ${esc(b.title)}<small>${esc(b.unit)} · ${shortDate(date)} 과제</small></p><button class="btn ghost sm" type="button" id="bk">과제 목록으로</button></div>
+  <section class="sheet"><div class="sec-title"><h2>오늘의 꾸러미</h2><p class="small">${doneN} / ${b.steps.length}단계 끝 · 약 ${b.min}분</p></div>
+    <div class="bprog" aria-hidden="true">${b.steps.map((_, i) => `<span class="${st[i] && st[i].done ? 'd' : i === nextI ? 'c' : ''}"></span>`).join('')}</div>
+    <div class="tasks" style="margin-top:14px">${b.steps.map((s, i) => { const x = st[i], d = x && x.done; return `<article class="task ${d ? 'done' : ''}"><span class="tn">${i + 1}</span><div><p class="tt">${esc(s.title)}</p><p class="td">${s.type === 'quiz' ? `문제 풀기 · ${s.questions.length}문제` : esc((GAMES[s.game.app] || {}).title || '')}</p></div><div class="side">${x ? `<span class="res">${stepRes(s, x)}</span>` : ''}${d ? '<span class="mini-stamp" aria-label="완료">참<br>잘했어요</span>' : ''}<button class="btn ${d ? 'ghost' : i === nextI ? 'blue' : 'ghost'}" type="button" data-step="${i}">${d ? '다시 하기' : x ? '이어 하기' : '시작하기'}</button></div></article>`; }).join('')}</div>
+    ${r.done ? '<p class="note-done">꾸러미를 모두 끝냈어요. 다시 하면 더 좋은 기록으로 바뀌어요.</p>' : '<p class="small" style="margin-top:12px">위에서부터 차례대로 하면 돼요. 모든 단계를 끝내면 도장을 받아요.</p>'}</section>`);
+  $('#bk').onclick = () => studentHome(sid);
+  $$('[data-step]').forEach(btn => btn.onclick = () => { const i = +btn.dataset.step, s = b.steps[i], path = `${base}/steps/${i}`, touch = () => DB.update(base, { at: Date.now() });
+    if (s.type === 'quiz') playQuiz(sid, date, task, { set: { title: `${b.no} ${s.title}`, questions: s.questions }, path, back, after: async rec => { await touch(); await stampModal('단계 끝', `${rec.total}문제 중 <b>${rec.score}문제</b>를 처음에 바로 맞혔어요.`, '꾸러미로'); back(); } });
+    else openGame(sid, date, { id: task.id + '-' + i, type: 'game', step: true, title: `${b.no} ${s.title}`, game: s.game }, { path, back, onSave: touch }); });
+}
+
 /* ================= 게임 과제 ================= */
-function openGame(sid, date, task) {
+function openGame(sid, date, task, opt = {}) {
   const g = GAMES[task.game.app]; if (!g) { toast('게임을 찾을 수 없어요.'); return; }
   const mi = modeInfo(task.game.app, task.game.mode), s = C.students[sid];
-  const url = `${g.file}?embed=1&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(s.name)}&mode=${encodeURIComponent(task.game.mode)}&level=${task.game.level || 1}&goal=${task.game.goal || 50}`;
+  const url = `${g.file}?embed=1&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(s.name)}&mode=${encodeURIComponent(task.game.mode)}&level=${task.game.level || 1}&goal=${task.game.goal || 50}&time=${task.game.time || 60}${task.game.from != null ? `&from=${task.game.from}&to=${task.game.to}` : ''}`;
   const host = document.createElement('div'); host.className = 'gamehost';
-  host.innerHTML = `<header><b>${esc(taskTitle(task))}${mi.once ? '' : ` · 목표 ${task.game.goal}점`}</b><button class="btn ghost sm" type="button" id="hclose">과제 목록으로</button></header><iframe title="${esc(g.title)}" src="${url}"></iframe>`;
+  host.innerHTML = `<header><b>${task.free ? '구구단 타자 연습 기록 경쟁 · ' + esc(mi.label) : esc(taskTitle(task))}${mi.once ? '' : g.timed ? ` · ${task.game.time || 60}초` : ` · 목표 ${task.game.goal}점`}</b><button class="btn ghost sm" type="button" id="hclose">${task.free ? '나가기' : opt.back ? '꾸러미로 돌아가기' : '과제 목록으로'}</button></header><iframe title="${esc(g.title)}" src="${url}"></iframe>`;
   document.body.appendChild(host); document.body.style.overflow = 'hidden';
   const frame = $('iframe', host); let wasDone = false; let chain = Promise.resolve();
-  DB.get(`results/${sid}/${date}/${task.id}`).then(r => { wasDone = !!(r && r.done); });
-  const close = () => { window.removeEventListener('message', onMsg); host.remove(); document.body.style.overflow = ''; studentHome(sid); };
+  const rpath = opt.path || `results/${sid}/${date}/${task.id}`;
+  if (!task.free) DB.get(rpath).then(r => { wasDone = !!(r && r.done); });
+  const close = () => { window.removeEventListener('message', onMsg); host.remove(); document.body.style.overflow = ''; (opt.back || (() => studentHome(sid)))(); };
   const onMsg = e => {
     if (e.source !== frame.contentWindow) return; const m = e.data; if (!m || m.src !== 'lp-game') return;
     if (m.type === 'close') { chain.then(close); return; }
+    if (m.type === 'ready') { frame.contentWindow.postMessage({ src: 'lp-host', type: 'words', words: task.game.words || '' }, '*'); return; }
     chain = chain.then(async () => {
       if (m.type === 'fact' && m.key) { const p = `facts/${sid}/${m.key}`, f = (await DB.get(p)) || { c: 0, w: 0, s: 0 }; if (m.ok) { f.c++; f.s++; } else { f.w++; f.s = 0; } await DB.set(p, f); return; }
+      if (m.type === 'session' && task.game.app === 'rain' && await updateRank(sid, task.game.mode, m)) toast(`새 최고 기록 ${m.score}점! 순위표에 올렸어요.`);
+      if (task.free) { if (m.type === 'session') await DB.set(`logs/${sid}/${newId()}`, { at: Date.now(), date, tid: 'free', app: task.game.app, mode: task.game.mode, score: m.score || 0, solved: m.solved || 0, level: m.level || 1, free: true }); return; }
       if (m.type === 'goal' || m.type === 'session') {
-        const p = `results/${sid}/${date}/${task.id}`, r = (await DB.get(p)) || { done: false, best: 0, sessions: 0 };
+        const p = rpath, r = (await DB.get(p)) || { done: false, best: 0, sessions: 0 };
         r.best = Math.max(r.best || 0, m.score || 0); r.at = Date.now(); r.level = m.level || r.level || task.game.level || 1;
         if (m.achieved || m.type === 'goal') r.done = true;
         if (m.type === 'session') { r.sessions = (r.sessions || 0) + 1; r.solved = (r.solved || 0) + (m.solved || 0); r.first = (r.first || 0) + (m.first || 0);
           await DB.set(`logs/${sid}/${newId()}`, { at: Date.now(), date, tid: task.id, app: task.game.app, mode: task.game.mode, score: m.score || 0, goal: m.goal || 0, solved: m.solved || 0, first: m.first || 0, achieved: !!m.achieved }); }
-        await DB.set(p, r);
-        if (r.done && !wasDone) { wasDone = true; toast('과제 완료! 도장을 받았어요.'); }
+        await DB.set(p, r); if (opt.onSave) await opt.onSave(r);
+        if (r.done && !wasDone) { wasDone = true; toast(opt.back ? '이 단계를 끝냈어요!' : '과제 완료! 도장을 받았어요.'); }
       }
     }).catch(err => toast('저장하지 못했어요: ' + err.message));
   };
   window.addEventListener('message', onMsg);
-  $('#hclose', host).onclick = () => chain.then(close);
+  $('#hclose', host).onclick = () => { if (task.game.app === 'rain') { frame.contentWindow.postMessage({ src: 'lp-host', type: 'end' }, '*'); setTimeout(() => chain.then(close), 450); } else chain.then(close); };
+}
+
+/* ================= 구구단 산성비 기록 경쟁 ================= */
+const RAIN_MODES = GAMES.rain.modes;
+const LV_NAME = ['', '느리게', '보통', '빠르게'];
+function rankBoardHTML(rank, mode, me) {
+  const rows = Object.entries((rank || {})[mode] || {}).filter(([sid]) => C.students[sid]).map(([sid, r]) => ({ sid, ...r })).sort((a, b) => b.score - a.score || a.at - b.at);
+  if (!rows.length) return '<p class="empty">아직 이 단의 기록이 없어요. 첫 기록의 주인공이 되어 봐요!</p>';
+  return `<div class="tablewrap"><table class="rank"><thead><tr><th>순위</th><th>이름</th><th>최고 점수</th><th>최대 콤보</th><th>맞힌 곱셈</th><th>빠르기</th><th>날짜</th></tr></thead><tbody>${rows.map((r, i) => `<tr class="${r.sid === me ? 'me' : ''}"><td>${i === 0 ? '<span class="first">1등</span>' : (i + 1) + '등'}</td><td><span class="swatch" style="background:${esc(C.students[r.sid].color || COLORS[0])}"></span> ${esc(C.students[r.sid].name)}${r.sid === me ? ' <small>(나)</small>' : ''}</td><td><b>${r.score}</b>점</td><td>${r.combo || 0}</td><td>${r.cleared || 0}개</td><td>${LV_NAME[r.level || 1]}</td><td>${r.at ? shortDate(ymd(new Date(r.at))) : ''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+const modePills = (cur, attr) => `<div class="checks">${RAIN_MODES.map(([k, v]) => `<button type="button" class="pill ${k === cur ? 'on' : ''}" data-${attr}="${k}">${v}</button>`).join('')}</div>`;
+function rainBoxHTML(sid) {
+  const mode = ls.get('lp.rainmode') || 'gugu-2', lv = +(ls.get('lp.rainlv') || 1), my = ((VIEW.rank || {})[mode] || {})[sid];
+  return `<div class="sec-title"><h2>구구단 타자 연습 · 기록 경쟁</h2><p class="small">1분 동안 누가 점수를 더 많이 모을까요? 과제를 다 하고 도전해 봐요</p></div>
+    <p class="label" style="margin-top:12px">단 고르기</p>${modePills(mode, 'rm')}
+    <p class="label" style="margin-top:12px">빠르기</p><div class="checks">${[1, 2, 3].map(v => `<button type="button" class="pill ${v === lv ? 'on' : ''}" data-rl="${v}">${v} ${LV_NAME[v]}</button>`).join('')}</div>
+    <div class="raingo"><p>내 최고 기록 <b>${my ? my.score : 0}점</b>${my ? ` · 최대 콤보 ${my.combo || 0}` : ''}<br><span class="small">1분을 끝까지 하면 기록이 순위표에 올라가요</span></p><button class="btn blue big" type="button" id="rgo">${esc(RAIN_MODES.find(m => m[0] === mode)[1])} 도전하기</button></div>
+    <p class="label" style="margin-top:16px">${esc(RAIN_MODES.find(m => m[0] === mode)[1])} 순위</p>${rankBoardHTML(VIEW.rank, mode, sid)}`;
+}
+function wireRainBox(sid) {
+  const box = $('#rainbox'); if (!box) return;
+  const redraw = () => { box.innerHTML = rainBoxHTML(sid); wireRainBox(sid); };
+  $$('[data-rm]', box).forEach(b => b.onclick = () => { ls.set('lp.rainmode', b.dataset.rm); redraw(); });
+  $$('[data-rl]', box).forEach(b => b.onclick = () => { ls.set('lp.rainlv', b.dataset.rl); redraw(); });
+  $('#rgo', box).onclick = () => { const mode = ls.get('lp.rainmode') || 'gugu-2', lv = +(ls.get('lp.rainlv') || 1), my = ((VIEW.rank || {})[mode] || {})[sid];
+    openGame(sid, today(), { id: 'free', free: true, type: 'game', game: { app: 'rain', mode, level: lv, time: 60, goal: 0 } }); };
+}
+async function updateRank(sid, mode, m) {
+  if (!m.score || !m.achieved || (m.time || 60) !== 60) return false; const p = `rank/${mode}/${sid}`, r = await DB.get(p);
+  if (r && r.score >= m.score) return false;
+  await DB.set(p, { score: m.score, cleared: m.solved || 0, combo: m.combo || 0, level: m.level || 1, at: Date.now() }); return true;
 }
 
 /* ================= 포트폴리오 ================= */
@@ -801,7 +1010,7 @@ function portfolioHTML(sid, data, teacher) {
   let heat = ''; for (let k = startD; k <= endSat; k = addDays(k, 1)) { const n = perDay[k] || 0; heat += `<span class="${k > today() ? 'out' : n >= 2 ? 'l2' : n ? 'l1' : ''}" title="${k}${n ? ' · ' + n + '개 완료' : ''}"></span>`; }
   // 단원별 성장
   const groups = {};
-  items.slice().reverse().forEach(it => { const key = it.t.type === 'game' ? `g:${it.t.game.app}:${it.t.game.mode}` : `q:${it.t.setId}`; const g = groups[key] || (groups[key] = { title: taskTitle(it.t), vals: [], unit: it.t.type === 'game' ? '점' : '%', once: it.t.type === 'game' && modeInfo(it.t.game.app, it.t.game.mode).once });
+  items.slice().reverse().forEach(it => { if (it.t.type === 'bundle') return; const key = it.t.type === 'game' ? `g:${it.t.game.app}:${it.t.game.mode}` : `q:${it.t.setId}`; const g = groups[key] || (groups[key] = { title: taskTitle(it.t), vals: [], unit: it.t.type === 'game' ? '점' : '%', once: it.t.type === 'game' && modeInfo(it.t.game.app, it.t.game.mode).once });
     g.vals.push(it.t.type === 'game' ? (it.r.best || 0) : Math.round(it.r.score / Math.max(1, it.r.total) * 100)); });
   const growRows = Object.values(groups).filter(g => !g.once).map(g => { const mx = Math.max(1, ...g.vals), v = g.vals.slice(-12); return `<div class="gr2"><span class="gt">${esc(g.title)}</span><span class="gs">${g.vals.length}번 · 처음 ${g.vals[0]}${g.unit} → 최근 ${g.vals[g.vals.length-1]}${g.unit}</span><span class="bars" aria-hidden="true">${v.map((x, i) => `<i class="${i === v.length-1 ? 'last' : ''}" style="height:${Math.max(4, x / mx * 34)}px"></i>`).join('')}</span></div>`; }).join('');
   const onceList = Object.values(groups).filter(g => g.once).map(g => `<span class="pill-sm">${esc(g.title)}</span>`).join(' ');
@@ -809,6 +1018,8 @@ function portfolioHTML(sid, data, teacher) {
   const facts = data.facts || {}; let gugu = '';
   if (Object.keys(facts).length) { gugu = `<section class="sheet"><p class="label">구구단 표</p><div class="gtable">${'<div class="gh"><span></span>' + [1,2,3,4,5,6,7,8,9].map(b => `<span>×${b}</span>`).join('') + '</div>'}${[2,3,4,5,6,7,8,9].map(a => `<div class="gr"><span class="gd">${a}단</span>${[1,2,3,4,5,6,7,8,9].map(b => { const f = facts[a + 'x' + b], st = !f ? '' : f.s >= 3 ? 'm' : 's'; return `<span class="gc ${st}">${st ? a*b : ''}</span>`; }).join('')}</div>`).join('')}</div><p class="legend"><span class="gc s">6</span> 연습 중 <span class="gc m">6</span> 3번 연속 바로 맞힘</p></section>`; }
   const works = items.map(it => { const t = it.t, r = it.r;
+    if (t.type === 'bundle') { const b = BUNDLES[t.bundle]; const bd = b ? `<ol class="bsteps">${b.steps.map((s, i) => { const x = (r.steps || {})[i]; return `<li>${esc(s.title)} → ${!x ? '<span class="small">아직</span>' : s.type === 'quiz' ? `<span class="${x.score === x.total ? 'ok-t' : ''}">${x.score} / ${x.total} 맞힘</span>` : modeInfo(s.game.app, s.game.mode).once ? (x.done ? '끝' : '하는 중') : `최고 ${x.best || 0}점`}</li>`; }).join('')}</ol>` : '';
+      return `<div class="work"><span class="wd">${shortDate(it.date)}</span><div><p class="wt">${esc(taskTitle(t))}</p>${bd}${r.comment ? `<p class="comment">${esc(r.comment)}</p>` : ''}${teacher ? `<div class="cmt-edit"><input class="in" data-cmt="${it.date}|${t.id}" value="${esc(r.comment || '')}" placeholder="선생님 한마디 쓰기" maxlength="80"><button class="btn sm" type="button" data-cmtsave="${it.date}|${t.id}">저장</button></div>` : ''}</div><span class="wr">${resultText(t, r)}${r.done ? ' <span class="red">○</span>' : ''}</span></div>`; }
     const detail = t.type === 'quiz' && r.answers ? (() => { const set = C.sets[t.setId]; const qs = set ? set.questions || [] : []; return `<details><summary>내가 쓴 답 보기</summary><ol>${(r.answers || []).map((a, k) => `<li>${esc(qs[k] ? qs[k].q : '')} → <span class="${a.ok ? 'ok-t' : 'no-t'}">${esc(a.a)}</span>${a.ok ? '' : ` (정답 ${esc(qs[k] ? (qs[k].type === 'choice' ? qs[k].choices[qs[k].answer] : String(qs[k].answer).split('|')[0]) : '')})`}</li>`).join('')}</ol></details>`; })() : '';
     return `<div class="work"><span class="wd">${shortDate(it.date)}</span><div><p class="wt">${esc(taskTitle(t))}</p>${detail}${r.comment ? `<p class="comment">${esc(r.comment)}</p>` : ''}${teacher ? `<div class="cmt-edit"><input class="in" data-cmt="${it.date}|${t.id}" value="${esc(r.comment || '')}" placeholder="선생님 한마디 쓰기" maxlength="80"><button class="btn sm" type="button" data-cmtsave="${it.date}|${t.id}">저장</button></div>` : ''}</div><span class="wr">${resultText(t, r)}${r.done ? ' <span class="red">○</span>' : ''}</span></div>`; }).join('');
   const firstDay = [...days].sort()[0];
@@ -856,14 +1067,20 @@ async function tDash() {
   const list = studentList(); if (!list.length) return `<p class="empty">학생 관리에서 학생을 먼저 등록해 주세요.</p>`;
   const all = await Promise.all(list.map(s => loadStudentData(s.id)));
   const d = today(), monday = addDays(d, -((parseYmd(d).getDay() + 6) % 7));
+  VIEW.rank = (await DB.get('rank')) || {};
   return `<div class="grid-dash">${list.map((s, i) => { const data = all[i], td = dayStats(data, d); let wn = 0, wd = 0; for (let k = 0; k < 7; k++) { const x = dayStats(data, addDays(monday, k)); wn += x.n; wd += x.done; }
     let last = 0; for (const dd in data.results) for (const id in data.results[dd]) last = Math.max(last, (data.results[dd][id] || {}).at || 0);
     return `<section class="sheet scard"><h3><span class="swatch" style="background:${esc(s.color || COLORS[0])}"></span>${esc(s.name)}</h3>
       <dl class="kv"><div><dt>오늘</dt><dd>${td.done}<small> / ${td.n}</small></dd></div><div><dt>이번 주</dt><dd>${wn ? Math.round(wd / wn * 100) : 0}<small>%</small></dd></div><div><dt>연속</dt><dd>${streak(data)}<small>일</small></dd></div></dl>
       <p class="recent">${last ? `마지막 공부 ${shortDate(ymd(new Date(last)))} ${pad(new Date(last).getHours())}:${pad(new Date(last).getMinutes())}` : '아직 공부한 기록이 없어요'}</p>
-      <div class="row"><button class="btn sm" type="button" data-pf="${s.id}">포트폴리오</button><button class="btn ghost sm" type="button" data-give="${s.id}">과제 주기</button></div></section>`; }).join('')}</div>`;
+      <div class="row"><button class="btn sm" type="button" data-pf="${s.id}">포트폴리오</button><button class="btn ghost sm" type="button" data-give="${s.id}">과제 주기</button></div></section>`; }).join('')}</div>
+  <section class="sheet" id="trank"><div class="sec-title"><h2>구구단 타자 연습 순위 (1분 기록)</h2><p class="small">학생들이 오늘 과제 아래에서 도전한 기록이에요</p></div><div style="margin-top:10px">${modePills(VIEW.tmode || 'gugu-2', 'tm')}</div><div id="tboard" style="margin-top:12px">${rankBoardHTML(VIEW.rank, VIEW.tmode || 'gugu-2')}</div>
+    <div class="actions"><button class="btn ghost sm" type="button" id="rreset">이 단 순위 지우기</button></div></section>`;
 }
-WIRE.dash = () => { $$('[data-pf]').forEach(b => b.onclick = () => teacher('pf', { sid: b.dataset.pf })); $$('[data-give]').forEach(b => b.onclick = () => teacher('cal', { sids: [b.dataset.give] })); };
+WIRE.dash = () => {
+  const tm = () => VIEW.tmode || 'gugu-2';
+  $$('[data-tm]').forEach(b => b.onclick = () => { VIEW.tmode = b.dataset.tm; $$('[data-tm]').forEach(x => x.classList.toggle('on', x === b)); $('#tboard').innerHTML = rankBoardHTML(VIEW.rank, tm()); });
+  if ($('#rreset')) $('#rreset').onclick = async e => { const b = e.target; if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '정말 지우기'; b.classList.add('danger'); return; } await DB.remove('rank/' + tm()); delete VIEW.rank[tm()]; b.dataset.sure = ''; b.textContent = '이 단 순위 지우기'; b.classList.remove('danger'); $('#tboard').innerHTML = rankBoardHTML(VIEW.rank, tm()); toast('순위를 지웠어요.'); }; $$('[data-pf]').forEach(b => b.onclick = () => teacher('pf', { sid: b.dataset.pf })); $$('[data-give]').forEach(b => b.onclick = () => teacher('cal', { sids: [b.dataset.give] })); };
 async function tPortfolio(opt) { const data = await loadStudentData(opt.sid); VIEW.sid = opt.sid; VIEW.data = data; return `<button class="btn ghost sm back noprint" type="button" id="pfb">← 학생 현황</button>` + portfolioHTML(opt.sid, data, true); }
 WIRE.pf = () => { $('#pfb').onclick = () => teacher('dash'); wirePortfolio(); };
 
@@ -901,7 +1118,9 @@ function taskEditor({ sids, date, task, tid, copy }) {
     ${editing ? `<p class="small">${esc(C.students[sids[0]].name)} · ${dateLabel(date)}</p>` : `<div class="field"><span>학생</span><div class="checks">${list.map(s => `<label><input type="checkbox" name="sid" value="${s.id}" ${sids.includes(s.id) ? 'checked' : ''}>${esc(s.name)}</label>`).join('')}</div></div>
     <div class="formgrid"><label class="field"><span>날짜</span><input class="in" type="date" id="d1" value="${date}"></label><label class="field"><span>여러 날에 주기 (끝 날짜)</span><input class="in" type="date" id="d2" value=""></label></div>
     <div class="field" id="wdbox" hidden><span>주는 요일</span><div class="checks">${[1,2,3,4,5,6,0].map(w => `<label><input type="checkbox" name="wd" value="${w}" ${w >= 1 && w <= 5 ? 'checked' : ''}>${DOW[w]}</label>`).join('')}</div></div>`}
-    <div class="field"><span>과제 종류</span><div class="checks"><label><input type="radio" name="ty" value="game" ${t.type === 'game' ? 'checked' : ''}>연습장 게임</label><label><input type="radio" name="ty" value="quiz" ${t.type === 'quiz' ? 'checked' : ''}>문제 풀기</label></div></div>
+    <div class="field"><span>과제 종류</span><div class="checks"><label><input type="radio" name="ty" value="game" ${t.type === 'game' ? 'checked' : ''}>연습장 게임</label><label><input type="radio" name="ty" value="quiz" ${t.type === 'quiz' ? 'checked' : ''}>문제 풀기</label><label><input type="radio" name="ty" value="bundle" ${t.type === 'bundle' ? 'checked' : ''}>단원 꾸러미</label></div></div>
+    <div id="bbox" class="field"><span>단원 꾸러미 (개념·게임·문제가 묶인 한 차시 분량)</span><select class="in" id="bsel">${[...new Set(bundleList().map(x => x.unit))].map(u => `<optgroup label="${esc(u)}">${bundleList().filter(x => x.unit === u).map(x => `<option value="${x.id}" ${x.id === t.bundle ? 'selected' : ''}>${esc(x.no)} ${esc(x.title)} (${x.steps.length}단계 · 약 ${x.min}분)</option>`).join('')}</optgroup>`).join('')}</select>
+      ${editing ? '' : '<label class="chain"><input type="checkbox" id="bchain"> 이 차시부터 단원 끝까지 고른 요일에 하루 하나씩 차례로 주기</label>'}</div>
     <div id="gbox" class="formgrid"></div>
     <div id="qbox"></div>
     <label class="field"><span>학생에게 한마디 (선택)</span><input class="in" id="note" maxlength="40" value="${esc(t.note || '')}" placeholder="예: 천천히 그림을 세어 봐요"></label>
@@ -913,25 +1132,38 @@ function taskEditor({ sids, date, task, tid, copy }) {
     $('#gbox', ov).innerHTML = `<label class="field"><span>게임</span><select class="in" id="gapp">${Object.entries(GAMES).map(([k, v]) => `<option value="${k}" ${k === app ? 'selected' : ''}>${v.title}</option>`).join('')}</select></label>
       <label class="field"><span>내용</span><select class="in" id="gmode">${G.modes.map(m => `<option value="${m[0]}" ${m[0] === mode ? 'selected' : ''}>${m[1]}</option>`).join('')}</select></label>
       <label class="field gl"><span>방법·레벨</span><select class="in" id="glv">${G.levels.map((l, i) => `<option value="${i+1}" ${i+1 === (g0.level || 1) ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <label class="field gl"><span>목표 점수</span><input class="in" type="number" id="ggoal" min="10" max="500" step="10" value="${g0.goal || 50}"></label>`;
-    const syncOnce = () => { const once = modeInfo($('#gapp', ov).value, $('#gmode', ov).value).once; $$('.gl', ov).forEach(x => x.hidden = once); };
+      <label class="field gtm"><span>시간</span><select class="in" id="gtime">${[60, 90, 120, 180].map(t => `<option value="${t}" ${t === (g0.time || 60) ? 'selected' : ''}>${t}초${t === 60 ? ' (기록 경쟁과 같은 시간)' : ''}</option>`).join('')}</select></label>
+      <label class="field gl gg"><span>목표 점수</span><input class="in" type="number" id="ggoal" min="10" max="1000" step="10" value="${g0.goal || 50}"></label>
+      <label class="field gw" style="grid-column:1/-1"><span>낱말 (한 줄에 하나 · '보이는 말 = 쓸 말'로 쓰면 문제처럼 나와요)</span><textarea class="in" id="gwords" rows="6" placeholder="예)&#10;반지름&#10;원의 둘레 = 원주&#10;3 × 4 = 12">${esc(g0.words || '')}</textarea></label>`;
+    const syncOnce = () => { const mi = modeInfo($('#gapp', ov).value, $('#gmode', ov).value), timed = !!GAMES[$('#gapp', ov).value].timed; $$('.gl', ov).forEach(x => x.hidden = mi.once); $$('.gg', ov).forEach(x => x.hidden = mi.once || timed); $$('.gtm', ov).forEach(x => x.hidden = !timed); $$('.gw', ov).forEach(x => x.hidden = !mi.words); };
     $('#gapp', ov).onchange = e => drawGame(e.target.value); $('#gmode', ov).onchange = syncOnce; syncOnce();
   };
   const drawQuiz = () => { $('#qbox', ov).innerHTML = sets.length ? `<label class="field"><span>문제 세트</span><select class="in" id="qset">${sets.map(([k, v]) => `<option value="${k}" ${k === t.setId ? 'selected' : ''}>${esc(v.title)} (${(v.questions || []).length}문제)</option>`).join('')}</select></label>` : `<p class="empty">아직 문제 세트가 없어요. '문제 세트' 탭에서 먼저 만들어 주세요.</p>`; };
-  const syncType = () => { const ty = $('input[name=ty]:checked', ov).value; $('#gbox', ov).hidden = ty !== 'game'; $('#qbox', ov).hidden = ty !== 'quiz'; };
+  const syncType = () => { const ty = $('input[name=ty]:checked', ov).value; $('#gbox', ov).hidden = ty !== 'game'; $('#qbox', ov).hidden = ty !== 'quiz'; $('#bbox', ov).hidden = ty !== 'bundle'; if ($('#wdbox', ov)) $('#wdbox', ov).hidden = !($('#d2', ov).value || (ty === 'bundle' && $('#bchain', ov) && $('#bchain', ov).checked)); };
   drawGame(); drawQuiz(); syncType(); $$('input[name=ty]', ov).forEach(r => r.onchange = syncType);
-  if ($('#d2', ov)) $('#d2', ov).onchange = () => { $('#wdbox', ov).hidden = !$('#d2', ov).value; };
+  if ($('#d2', ov)) $('#d2', ov).onchange = syncType; if ($('#bchain', ov)) $('#bchain', ov).onchange = syncType;
   $('#cx', ov).onclick = () => ov.remove();
   $('#sv', ov).onclick = async () => {
     const fbe = $('#efb', ov), err = m => { fbe.className = 'fb wrong'; fbe.textContent = m; };
     const ty = $('input[name=ty]:checked', ov).value, rec = { type: ty, note: $('#note', ov).value.trim() || null, order: Date.now(), created: Date.now() };
-    if (ty === 'game') { const mo = $('#gmode', ov).value, once = modeInfo($('#gapp', ov).value, mo).once; rec.game = { app: $('#gapp', ov).value, mode: mo, level: once ? 1 : +$('#glv', ov).value, goal: once ? 0 : Math.max(10, +$('#ggoal', ov).value || 50) }; }
-    else { if (!$('#qset', ov)) return err('문제 세트를 먼저 만들어 주세요.'); rec.setId = $('#qset', ov).value; }
+    if (ty === 'game') { const mo = $('#gmode', ov).value, once = modeInfo($('#gapp', ov).value, mo).once; rec.game = { app: $('#gapp', ov).value, mode: mo, level: once ? 1 : +$('#glv', ov).value, goal: once ? 0 : Math.max(10, +$('#ggoal', ov).value || 50) };
+      if (GAMES[rec.game.app].timed) { rec.game.time = +$('#gtime', ov).value || 60; rec.game.goal = 0; }
+      if (modeInfo(rec.game.app, mo).words) { const wv = $('#gwords', ov).value.trim(); if (wv.split(/\n|,/).filter(x => x.trim()).length < 3) return err('낱말을 3개 이상 써 주세요.'); rec.game.words = wv; } }
+    else if (ty === 'quiz') { if (!$('#qset', ov)) return err('문제 세트를 먼저 만들어 주세요.'); rec.setId = $('#qset', ov).value; }
+    else rec.bundle = $('#bsel', ov).value;
     if (editing) { rec.order = t.order || rec.order; rec.created = t.created || rec.created; await DB.set(`tasks/${sids[0]}/${date}/${tid}`, rec); ov.remove(); toast('과제를 고쳤어요.'); teacher('cal', VIEW.opt); return; }
     const who = $$('input[name=sid]:checked', ov).map(x => x.value); if (!who.length) return err('학생을 한 명 이상 골라 주세요.');
     const d1 = $('#d1', ov).value, d2 = $('#d2', ov).value; if (!d1) return err('날짜를 골라 주세요.');
     let dates = [d1];
     if (d2) { if (d2 < d1) return err('끝 날짜가 시작 날짜보다 앞이에요.'); const wds = $$('input[name=wd]:checked', ov).map(x => +x.value); dates = []; for (let d = d1; d <= d2; d = addDays(d, 1)) if (wds.includes(parseYmd(d).getDay())) dates.push(d); if (!dates.length) return err('고른 요일에 해당하는 날이 없어요.'); if (dates.length > 120) return err('한 번에 120일까지만 줄 수 있어요.'); }
+    if (ty === 'bundle' && $('#bchain', ov) && $('#bchain', ov).checked) {
+      const ids = bundleList().filter(x => x.unit === BUNDLES[rec.bundle].unit).map(x => x.id), seq = ids.slice(ids.indexOf(rec.bundle)), wds = $$('input[name=wd]:checked', ov).map(x => +x.value);
+      if (!wds.length) return err('주는 요일을 하나 이상 골라 주세요.');
+      const days = []; for (let d = d1; days.length < seq.length; d = addDays(d, 1)) if (wds.includes(parseYmd(d).getDay())) days.push(d);
+      const upd = {}; who.forEach(id => seq.forEach((bid, i) => { upd[`${id}/${days[i]}/${newId()}`] = { ...rec, bundle: bid }; }));
+      await DB.update('tasks', upd); ov.remove(); toast(`${who.length}명에게 ${BUNDLES[seq[0]].no}~${BUNDLES[seq[seq.length - 1]].no}를 ${shortDate(days[0])}부터 ${shortDate(days[days.length - 1])}까지 줬어요.`);
+      teacher('cal', { ...VIEW.opt, sel: d1, ym: d1.slice(0, 7) }); return;
+    }
     const upd = {}; who.forEach(id => dates.forEach((d, i) => { upd[`${id}/${d}/${newId()}`] = { ...rec, order: rec.order + i }; }));
     await DB.update('tasks', upd); ov.remove(); toast(`${who.length}명에게 ${dates.length}일 과제를 줬어요.`);
     teacher('cal', { ...VIEW.opt, sel: d1, ym: d1.slice(0, 7) });
@@ -1014,7 +1246,7 @@ async function tStu() {
 WIRE.stu = () => {
   $('#sadd').onclick = () => stuEditor(null);
   $$('[data-se]').forEach(b => b.onclick = () => stuEditor(b.dataset.se));
-  $$('[data-sd]').forEach(b => b.onclick = async () => { if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '기록까지 삭제'; b.classList.add('danger'); toast('한 번 더 누르면 이 학생의 과제와 기록이 모두 지워져요.'); return; } const id = b.dataset.sd; await Promise.all(['students', 'tasks', 'results', 'logs', 'facts'].map(k => DB.remove(`${k}/${id}`))); if (ls.get('lp.me') === id) ls.set('lp.me', null); toast('학생을 삭제했어요.'); teacher('stu'); });
+  $$('[data-sd]').forEach(b => b.onclick = async () => { if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '기록까지 삭제'; b.classList.add('danger'); toast('한 번 더 누르면 이 학생의 과제와 기록이 모두 지워져요.'); return; } const id = b.dataset.sd; await Promise.all(['students', 'tasks', 'results', 'logs', 'facts'].map(k => DB.remove(`${k}/${id}`))); await Promise.all(RAIN_MODES.map(([m]) => DB.remove(`rank/${m}/${id}`))); if (ls.get('lp.me') === id) ls.set('lp.me', null); toast('학생을 삭제했어요.'); teacher('stu'); });
 };
 function stuEditor(id) {
   const s = id ? C.students[id] : { name: '', pin: String(Math.floor(1000 + Math.random() * 9000)), color: COLORS[studentList().length % COLORS.length] };
